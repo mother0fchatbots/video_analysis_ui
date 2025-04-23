@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Video Analysis Tool</title>
+    <style>
+        body {
+            font-family: sans-serif;
+        }
+        #results {
+            margin-top: 20px;
+            border: 1px solid #ccc;
+            padding: 15px;
+        }
+        .summary-box {
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #eee;
+            background-color: #f9f9f9;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Video Analysis Tool</h1>
+
+    <div>
+        <label for="brightcoveLink">Enter Brightcove Video Link:</label><br>
+        <input type="text" id="brightcoveLink" name="brightcoveLink" size="80"><br><br>
+        <button onclick="analyzeVideo()">Analyze Video</button>
+    </div>
+
+    <div id="processingMessage" style="display: none; margin-top: 15px; font-style: italic;">
+        Processing video, please wait...
+    </div>
+
+    <div id="results" style="display: none;">
+        <h2>Analysis Results</h2>
+        <div id="shortSummary" class="summary-box">
+            <h3>Short Summary:</h3>
+            <p></p>
+        </div>
+        <div id="longSummary" class="summary-box">
+            <h3>Long Description:</h3>
+            <p></p>
+        </div>
+        <div id="errorMessage" class="error" style="display: none;"></div>
+    </div>
+
+    <script>
+        async function analyzeVideo() {
+            const brightcoveLink = document.getElementById("brightcoveLink").value;
+            const resultsDiv = document.getElementById("results");
+            const shortSummaryDiv = document.getElementById("shortSummary").querySelector("p");
+            const longSummaryDiv = document.getElementById("longSummary").querySelector("p");
+            const errorMessageDiv = document.getElementById("errorMessage");
+            const processingMessageDiv = document.getElementById("processingMessage");
+
+            // Clear previous results and hide the results div/error
+            shortSummaryDiv.textContent = "";
+            longSummaryDiv.textContent = "";
+            errorMessageDiv.style.display = "none";
+            resultsDiv.style.display = "none";
+            processingMessageDiv.style.display = "none"; // Ensure processing message is also hidden initially
+
+            if (!brightcoveLink.trim()) {
+                errorMessageDiv.textContent = "Please enter a Brightcove video link.";
+                errorMessageDiv.style.display = "block";
+                return;
+            }
+
+            // Show the processing message
+            processingMessageDiv.style.display = "block";
+
+            try {
+                const response = await fetch("https://video-analysis-api.onrender.com/analyze", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ brightcove_link: brightcoveLink }),
+                });
+
+                // Hide the processing message when the response comes back
+                processingMessageDiv.style.display = "none";
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    errorMessageDiv.textContent = `Error: ${response.status} - ${errorData.error || "Something went wrong"}`;
+                    errorMessageDiv.style.display = "block";
+                    return;
+                }
+
+                const data = await response.json();
+                shortSummaryDiv.textContent = data.short_summary || "No short summary available.";
+                longSummaryDiv.textContent = data.long_summary || "No long description available.";
+                resultsDiv.style.display = "block";
+
+            } catch (error) {
+                processingMessageDiv.style.display = "none"; // Hide processing message on fetch error
+                errorMessageDiv.textContent = `Error: Could not connect to the server. ${error}`;
+                errorMessageDiv.style.display = "block";
+            }
+        }
+    </script>
+</body>
+</html>
