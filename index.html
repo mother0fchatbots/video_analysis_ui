@@ -68,7 +68,7 @@
             try {
                 const response = await fetch("https://video-analysis-api.onrender.com/analyze", {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
+                    headers: { "Content-Type": "application/json" ,},
                     body: JSON.stringify({ brightcove_link: brightcoveLink }),
                 });
 
