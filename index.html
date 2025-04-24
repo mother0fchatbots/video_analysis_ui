@@ -3,24 +3,11 @@
 <head>
     <title>Video Analysis Tool</title>
     <style>
-        body {
-            font-family: sans-serif;
-        }
-        #results {
-            margin-top: 20px;
-            border: 1px solid #ccc;
-            padding: 15px;
-        }
-        .summary-box {
-            margin-bottom: 10px;
-            padding: 10px;
-            border: 1px solid #eee;
-            background-color: #f9f9f9;
-        }
-        .error {
-            color: red;
-            font-weight: bold;
-        }
+        body { font-family: sans-serif; }
+        #results { margin-top: 20px; border: 1px solid #ccc; padding: 15px; }
+        .summary-box { margin-bottom: 10px; padding: 10px; border: 1px solid #eee; background-color: #f9f9f9; }
+        .error { color: red; font-weight: bold; }
+        #vttOutput { margin-top: 20px; border: 1px solid #ddd; padding: 15px; white-space: pre-wrap; font-family: monospace; }
     </style>
 </head>
 <body>
@@ -47,6 +34,9 @@
             <p></p>
         </div>
         <div id="errorMessage" class="error" style="display: none;"></div>
+
+        <h3>VTT File Content:</h3>
+        <div id="vttOutput"></div>
     </div>
 
     <script>
@@ -57,33 +47,31 @@
             const longSummaryDiv = document.getElementById("longSummary").querySelector("p");
             const errorMessageDiv = document.getElementById("errorMessage");
             const processingMessageDiv = document.getElementById("processingMessage");
+            const vttOutputDiv = document.getElementById("vttOutput");
 
-            // Clear previous results and hide the results div/error
+            // Clear previous results
             shortSummaryDiv.textContent = "";
             longSummaryDiv.textContent = "";
             errorMessageDiv.style.display = "none";
             resultsDiv.style.display = "none";
-            processingMessageDiv.style.display = "none"; // Ensure processing message is also hidden initially
+            vttOutputDiv.textContent = ""; // Clear previous VTT output
 
             if (!brightcoveLink.trim()) {
                 errorMessageDiv.textContent = "Please enter a Brightcove video link.";
                 errorMessageDiv.style.display = "block";
+                processingMessageDiv.style.display = "none";
                 return;
             }
 
-            // Show the processing message
             processingMessageDiv.style.display = "block";
 
             try {
                 const response = await fetch("https://video-analysis-api.onrender.com/analyze", {
                     method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
+                    headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ brightcove_link: brightcoveLink }),
                 });
 
-                // Hide the processing message when the response comes back
                 processingMessageDiv.style.display = "none";
 
                 if (!response.ok) {
@@ -98,8 +86,14 @@
                 longSummaryDiv.textContent = data.long_summary || "No long description available.";
                 resultsDiv.style.display = "block";
 
+                if (data.vtt_content) {
+                    vttOutputDiv.textContent = data.vtt_content;
+                } else {
+                    vttOutputDiv.textContent = "No VTT content available.";
+                }
+
             } catch (error) {
-                processingMessageDiv.style.display = "none"; // Hide processing message on fetch error
+                processingMessageDiv.style.display = "none";
                 errorMessageDiv.textContent = `Error: Could not connect to the server. ${error}`;
                 errorMessageDiv.style.display = "block";
             }
